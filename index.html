@@ -390,5 +390,32 @@
   <h2>Understanding the Basis of how our Model</h2>
   <p>This project utilizes <b>BLIP</b> (Bootstrapping Language-Image Pre-training), this is a vision-language model developed by Salesforce Research. Here's how it works at a conceptual level.</p>
   <h2>From Image to Caption</h2>
-  <p></p>
+  <p>BLIP has two main components that are working togther</p>
+  <p><b>1. A vision encoder:</b> it takes in the raw image and converts it into a set of feature vectors that represent what's in the image. BLIP utilizes a Vision Transformer (known as ViT) for this, which splits the image into patches and processes them similarly to how a text transformer processes words</p>
+  <p><b>2. A language decoder:</b> it takes those image features and generates and generates a caption word by word, conditioned on what came before. It is mainly a language model that is trained to describe images instead of predicting words in a text.</p>
+  <p>Those two components were pre-trained together on hundereds of millions of image-caption pairs from the internet.</p>
+  <h2>Loading in BLIP</h2>
+  <py-script>
+    model_id  = "Salesforce/blip-image-captioning-base"
+processor = BlipProcessor.from_pretrained(model_id)
+model     = BlipForConditionalGeneration.from_pretrained(model_id)
+
+print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
+</py-script>
+
+<br>
+<h2>Why This Model for This Task?</h2>
+<p>The reason behind choosing the BLIP model compared to other approaches (like image classifiers) is that since alt-text requires <i>description</i>, not just simple labeling. Knowing that an image contains a "dog" is less useful than knowing it shows "a dog catching a frisbee at a dog park." BLIP's captioning capability is much more closer to what good alt-text requires.</p>
+<p>Additionally, it is also freely available via Hugging Face, runs on a CPU (slowly) or on GPU (faster), and it has been well studied; signaling that there is existing literature that exists to draw on when analyzing the failure of the modes that it contains  </p>
+</section>
+
+<!-- IMAGE PROCESSING -->
+<section id="model">
+<p class="section-label">03 - Image Processing</p>
+<h2>Image Processing Experiments</h2>
+<p>Before an image reaches the model, there are several preprocessing decsions to make. In this section we will systematically test out how different image transformations the quality of the generated alt-text.</p>
+<p>The core question for this section is: <b>does it matter how you prepare the image, and if so, how much?</b></p>
+
+
+
 </section>
