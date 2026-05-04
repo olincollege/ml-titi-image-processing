@@ -390,34 +390,209 @@
 <section id="model">
   <p class="section-label">02 - How the Model Works</p>
   <h2>Understanding the Basis of how our Model</h2>
-  <p>This project utilizes <b>BLIP</b> (Bootstrapping Language-Image Pre-training), this is a vision-language model developed by Salesforce Research. Here's how it works at a conceptual level.</p>
-  <h2>From Image to Caption</h2>
+  <p>
+    This project uses <b>BLIP</b> (Bootstrapping Language-Image Pre-training), a model that combines computer vision and natural language generation.</p>
+  <h3>Model Architecture</h3>
   <p>BLIP has two main components that are working togther</p>
-  <p><b>1. A vision encoder:</b> it takes in the raw image and converts it into a set of feature vectors that represent what's in the image. BLIP utilizes a Vision Transformer (known as ViT) for this, which splits the image into patches and processes them similarly to how a text transformer processes words</p>
-  <p><b>2. A language decoder:</b> it takes those image features and generates and generates a caption word by word, conditioned on what came before. It is mainly a language model that is trained to describe images instead of predicting words in a text.</p>
-  <p>Those two components were pre-trained together on hundereds of millions of image-caption pairs from the internet.</p>
-  <h2>Loading in BLIP</h2>
-  <py-script>
-    model_id  = "Salesforce/blip-image-captioning-base"
-processor = BlipProcessor.from_pretrained(model_id)
-model     = BlipForConditionalGeneration.from_pretrained(model_id)
+  <ul>
+    <li><b>A vision encoder:</b> it takes in the raw image and converts it into a set of feature vectors that represent what's in the image. BLIP utilizes a Vision Transformer (known as ViT) for this, which splits the image into patches and processes them similarly to how a text transformer processes words</li>
+    <li><b>A language decoder:</b> it takes those image features and generates and generates a caption word by word, conditioned on what came before. It is mainly a language model that is trained to describe images instead of predicting words in a text.</li>
+  <ul>
 
-print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
-</py-script>
+  <p>
+    Together, these allow the model to translate images into text.
+  </p>
 
-<br>
-<h2>Why This Model for This Task?</h2>
-<p>The reason behind choosing the BLIP model compared to other approaches (like image classifiers) is that since alt-text requires <i>description</i>, not just simple labeling. Knowing that an image contains a "dog" is less useful than knowing it shows "a dog catching a frisbee at a dog park." BLIP's captioning capability is much more closer to what good alt-text requires.</p>
-<p>Additionally, it is also freely available via Hugging Face, runs on a CPU (slowly) or on GPU (faster), and it has been well studied; signaling that there is existing literature that exists to draw on when analyzing the failure of the modes that it contains  </p>
+  <h2>Why BLIP?</h2>
+  <p>
+    Unlike classifiers, BLIP produces full descriptions. This makes it better suited
+    for alt-text, which requires context and meaning rather than simple labels.
+  </p>
+
+  <h2>From Theory to Practice</h2>
+  <p>
+    While BLIP is pre-trained, it does not inherently produce accessibility-focused
+    descriptions. To address this, it was fine-tuned on real alt-text data.
+  </p>
 </section>
 
-<!-- IMAGE PROCESSING -->
-<section id="model">
-<p class="section-label">03 - Image Processing</p>
-<h2>Image Processing Experiments</h2>
-<p>Before an image reaches the model, there are several preprocessing decsions to make. In this section we will systematically test out how different image transformations the quality of the generated alt-text.</p>
-<p>The core question for this section is: <b>does it matter how you prepare the image, and if so, how much?</b></p>
+<!-- IMPLEMENTATION -->
+<section id="implementation">
+<p class="section-label">03 - Implementation</p>
+<h2>What was actually built</h2>
+  <p>
+    The system was implemented in a Google Colab notebook using PyTorch and Hugging Face.
+    The pipeline includes dataset loading, preprocessing, model training, and inference.
+  </p>
 
+<h3><b>Dataset-</b></h3>
+  <p>
+    The Flickr30k dataset was used, containing human-written alt-text captions.
+  </p>
 
+<div class="callout">
+    Training examples: 22,500<br>
+    Evaluation examples: 2,500
+  </div>
+
+  <h3><b>Custom dataset</b></h3>
+  <p>
+    A custom dataset class was created to process images and captions into tensors.
+    This step ensures that both image and text inputs are aligned for training.
+  </p>
+
+  <pre><code>
+encoding = processor(images=image, text=caption)
+  </code></pre>
+
+  <h3><b>Training</b></h3>
+  <p>
+    The model was fine-tuned using Hugging Face’s training framework.
+  </p>
+
+  <ul>
+    <li>3 training epochs</li>
+    <li>Learning rate: 3e-5</li>
+    <li>Gradient accumulation for stability</li>
+  </ul>
+
+  <table>
+    <tr><th>Epoch</th><th>Train Loss</th><th>Val Loss</th></tr>
+    <tr><td>1</td><td>16.72</td><td>2.08</td></tr>
+    <tr><td>2</td><td>14.16</td><td>2.01</td></tr>
+    <tr><td>3</td><td>12.57</td><td>2.02</td></tr>
+  </table>
+
+  <p>
+    Training loss decreases steadily, indicating learning, while validation loss
+    stabilizes—suggesting performance limits.
+  </p>
+
+  <h3><b>Inference</b></h3>
+  <p>
+    After training, the model generates captions for new images.
+  </p>
+
+  <pre><code>
+output = model.generate(**inputs)
+  </code></pre>
+
+  <p>
+    This allows the system to be used interactively, such as in the demo below.
+  </p>
 
 </section>
+
+
+<!-- PROCESSING -->
+<section id="image-processing">
+  <p class="section-label">04 - Processing</p>
+
+  <h2>Image Processing Experiments</h2>
+
+  <p>
+    The model's output depends heavily on how images are prepared.
+  </p>
+
+  <div class="experiment">
+    <div class="experiment-header">Resolution</div>
+    <div class="experiment-body">
+      <div class="experiment-row">
+        <div class="experiment-cell">
+          <div class="label">Original</div>
+          <div class="img-placeholder">Image</div>
+          <div class="caption-out">"A man riding a bike"</div>
+          <span class="rating good">Good</span>
+        </div>
+        <div class="experiment-cell">
+          <div class="label">Low Resolution</div>
+          <div class="img-placeholder">Image</div>
+          <div class="caption-out">"A person riding something"</div>
+          <span class="rating partial">Partial</span>
+        </div>
+      </div>
+      <p>Lower detail reduces caption specificity.</p>
+    </div>
+  </div>
+
+  <div class="experiment">
+    <div class="experiment-header">Cropping</div>
+    <div class="experiment-body">
+      <div class="experiment-row">
+        <div class="experiment-cell">
+          <div class="label">Full</div>
+          <div class="img-placeholder">Image</div>
+          <div class="caption-out">"People at a beach"</div>
+          <span class="rating good">Good</span>
+        </div>
+        <div class="experiment-cell">
+          <div class="label">Cropped</div>
+          <div class="img-placeholder">Image</div>
+          <div class="caption-out">"A person standing"</div>
+          <span class="rating poor">Poor</span>
+        </div>
+      </div>
+      <p>Removing context leads to vague outputs.</p>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- EVALUATION -->
+<section id="evaluation">
+  <p class="section-label">05 - Evaluation</p>
+
+  <h2>What works—and what doesn’t</h2>
+
+  <h3>Strengths</h3>
+  <ul>
+    <li>Captures general scenes well</li>
+    <li>Handles common objects reliably</li>
+  </ul>
+
+  <h3>Weaknesses</h3>
+  <ul>
+    <li>Misses important details</li>
+    <li>Struggles with context</li>
+    <li>Fails on text-heavy images</li>
+  </ul>
+
+  <div class="callout">
+    Correct captions are not always useful captions.
+  </div>
+
+  <p>
+    Accessibility requires intention and context—something current models lack.
+  </p>
+</section>
+
+
+<!-- TRY IT -->
+<section id="try-it">
+  <p class="section-label">06 - Try It</p>
+
+  <h2>Try the model yourself</h2>
+
+  <p>
+    Upload your own image and see how the model performs.
+  </p>
+
+  <div class="try-it-box">
+    <div class="try-it-header">Live Demo</div>
+    <div class="try-it-body">
+      <iframe src="YOUR_LINK"></iframe>
+    </div>
+    <div class="try-it-note">
+      Results may be inaccurate or overly general.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>ML Final Project · 2026</span>
+  <span>Built with HTML/CSS</span>
+</footer>
+
+</body>
+</html>
