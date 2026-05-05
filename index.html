@@ -135,7 +135,7 @@
     }
     h3 {
       font-family: var(--sans);
-      font-size: 16px;
+      font-size: 25px;
       font-weight: 500;
       margin: 2rem 0 0.5rem;
       letter-spacing: 0.01em;
@@ -389,97 +389,241 @@
 <!-- HOW IT WORKS -->
 <section id="model">
   <p class="section-label">02 - How the Model Works</p>
-  <h2>Understanding the Basis of how our Model</h2>
+  
+   <h2>From image to language</h2>
+
   <p>
-    This project uses <b>BLIP</b> (Bootstrapping Language-Image Pre-training), a model that combines computer vision and natural language generation.</p>
+    For this project we will be using <b>BLIP (known as Bootstrapping Language-Image Pre-training)</b>,
+    it is a vision-language model that translates images into natural language descriptions.
+  </p>
+
+  <p>
+    Unlike traditional computer vision systems that classify objects,
+    BLIP generates full sentences. This makes it well suited for alt-text,
+    which requires not just recognition, but explanation.
+  </p>
+
   <h3>Model Architecture</h3>
-  <p>BLIP has two main components that are working togther</p>
+
+  <p>
+    BLIP uses two core components which are:
+  </p>
+
   <ul>
-    <li><b>A vision encoder:</b> it takes in the raw image and converts it into a set of feature vectors that represent what's in the image. BLIP utilizes a Vision Transformer (known as ViT) for this, which splits the image into patches and processes them similarly to how a text transformer processes words</li>
-    <li><b>A language decoder:</b> it takes those image features and generates and generates a caption word by word, conditioned on what came before. It is mainly a language model that is trained to describe images instead of predicting words in a text.</li>
-  <ul>
+    <li>
+      <b>Vision encoder (known as ViT):</b> Where the image is split into patches and encoded into feature vectors.
+      This allows for the model to understand objects, layout, and visual structure.
+    </li>
+    <li>
+      <b>Language decoder:</b> This is a transformer that generates text token-by-token,
+      conditioned on the image features.
+    </li>
+  </ul>
 
   <p>
-    Together, these allow the model to translate images into text.
+    These components are trained together on large image-text datasets,
+    allowing the model to learn how visual patterns correspond to language.
   </p>
 
-  <h2>Why BLIP?</h2>
+  <h3>What the Model Actually Does</h3>
+
   <p>
-    Unlike classifiers, BLIP produces full descriptions. This makes it better suited
-    for alt-text, which requires context and meaning rather than simple labels.
+    Conceptually, the model performs this pipeline:
   </p>
 
-  <h2>From Theory to Practice</h2>
+  <div class="callout">
+    Image → Feature Extraction → Language Generation → Caption
+  </div>
+
+  <h3>Why this Matters for Alt-text</h3>
+
   <p>
-    While BLIP is pre-trained, it does not inherently produce accessibility-focused
-    descriptions. To address this, it was fine-tuned on real alt-text data.
+    Alt-text is not just labeling images, it needs the images to contain a descriptive meaning.
+    Unlike classifiers that output single words, BLIP generates full sentences,
+    making it better suited for accessibility tasks.
   </p>
+
+  <div class="callout">
+    <b>Note:</b> Even though, this model is good at captioning it does not mean that it is good completely at accessibility field.
+    The goal of this project is to explore that gap.
+  </div>
 </section>
 
 <!-- IMPLEMENTATION -->
 <section id="implementation">
 <p class="section-label">03 - Implementation</p>
 <h2>What was actually built</h2>
-  <p>
-    The system was implemented in a Google Colab notebook using PyTorch and Hugging Face.
-    The pipeline includes dataset loading, preprocessing, model training, and inference.
-  </p>
 
-<h3><b>Dataset-</b></h3>
-  <p>
-    The Flickr30k dataset was used, containing human-written alt-text captions.
-  </p>
+<p>
+This project was implemented in Google Colab using the PyTorch library and a dataset from Hugging Face.
+The project pipeline includes dataset loading, preprocessing, model fine-tuning, and inference. 
+To access this project click here: <a href="https://colab.research.google.com/drive/1FSQ3ed94q21K3fj8gHOc20JSvqzncOFj#scrollTo=kLX-jQjE2WKX">Colab Notebook</a>
+</p>
+
+---
+
+<h3>Environment setup</h3>
+
+<p>
+For this project, the model was trained on an NVIDIA A100 GPU (provided on Google Colab Pro) to handle large batch sizes
+and accelerate training. Essentially, it is used to enhance speed. 
+</p>
+
+<pre><code>
+CUDA available: True
+GPU: NVIDIA A100-SXM4-80GB
+</code></pre>
+
+---
+
+<h3>Dataset: real alt-text, not captions</h3>
+
+<p>
+The dataset that is used for project is Flickr30k with <b>original alt-text</b>, not generic captions.
+Each image contains multiple human-written descriptions.
+</p>
+
+<pre><code>
+raw = load_dataset("Mozilla/flickr30k-transformed-captions")
+</code></pre>
 
 <div class="callout">
-    Training examples: 22,500<br>
-    Evaluation examples: 2,500
-  </div>
+Train: 4500 images<br>
+Eval: 500 images<br>
+Expanded to 22,500 training examples due to multiple captions per image
+</div>
 
-  <h3><b>Custom dataset</b></h3>
-  <p>
-    A custom dataset class was created to process images and captions into tensors.
-    This step ensures that both image and text inputs are aligned for training.
-  </p>
+<p>
+Each image contributes several training samples, significantly increasing dataset size.
+</p>
 
-  <pre><code>
-encoding = processor(images=image, text=caption)
-  </code></pre>
+---
 
-  <h3><b>Training</b></h3>
-  <p>
-    The model was fine-tuned using Hugging Face’s training framework.
-  </p>
+<h3>Custom dataset construction</h3>
 
-  <ul>
-    <li>3 training epochs</li>
-    <li>Learning rate: 3e-5</li>
-    <li>Gradient accumulation for stability</li>
-  </ul>
+<p>
+A custom PyTorch Dataset from Hugging Face was built to expand each image into multiple
+(image, caption) pairs.
+</p>
 
-  <table>
-    <tr><th>Epoch</th><th>Train Loss</th><th>Val Loss</th></tr>
-    <tr><td>1</td><td>16.72</td><td>2.08</td></tr>
-    <tr><td>2</td><td>14.16</td><td>2.01</td></tr>
-    <tr><td>3</td><td>12.57</td><td>2.02</td></tr>
-  </table>
+<pre><code>
+for item in hf_dataset:
+  for cap in item["original_alt_text"]:
+    self.samples.append({"image": image, "caption": cap})
+</code></pre>
 
-  <p>
-    Training loss decreases steadily, indicating learning, while validation loss
-    stabilizes—suggesting performance limits.
-  </p>
+<p>
+<b>This is important:</b> that the model learns from multiple descriptions of the same image,
+which improves robustness but also introduces variation.
+</p>
 
-  <h3><b>Inference</b></h3>
-  <p>
-    After training, the model generates captions for new images.
-  </p>
+---
 
-  <pre><code>
-output = model.generate(**inputs)
-  </code></pre>
+<h3>Preprocessing</h3>
 
-  <p>
-    This allows the system to be used interactively, such as in the demo below.
-  </p>
+<p>
+The images and text are then processed together using the BLIP processor.
+</p>
+
+<pre><code>
+encoding = processor(
+  images=image,
+  text=caption,
+  padding="max_length",
+  truncation=True,
+  return_tensors="pt"
+)
+</code></pre>
+
+<p>
+Padding tokens are masked out during training to prevent them from affecting loss.
+</p>
+
+---
+
+<h3>Training configuration</h3>
+
+<p>
+The model was then fine-tuned using Hugging Face's Seq2SeqTrainer.
+</p>
+
+<ul>
+  <li>Using 3 epochs</li>
+  <li>Learning rate of: 3e-5</li>
+  <li>A Batch size: 16 (with gradient accumulation)</li>
+  <li>The Effective batch size: at 128</li>
+  <li>Use of a Cosine learning rate scheduler</li>
+  <li>Containing early stopping enabled</li>
+</ul>
+
+<pre><code>
+gradient_accumulation_steps = 8
+fp16 = True
+</code></pre>
+
+---
+
+<h3>Training results</h3>
+
+<table>
+<tr><th>Epoch</th><th>Train Loss</th><th>Validation Loss</th></tr>
+<tr><td>1</td><td>16.72</td><td>2.08</td></tr>
+<tr><td>2</td><td>14.16</td><td>2.01</td></tr>
+<tr><td>3</td><td>12.57</td><td>2.02</td></tr>
+</table>
+
+<p>
+As we can see, the training loss appears to decrease steadily, while the validation loss stabilizes,
+thus indicating that the model learns general patterns but plateaus quickly.
+</p>
+
+---
+
+<h3>Inference Pipeline</h3>
+
+<p>
+A reusable function was created to generate captions from:
+</p>
+
+<ul>
+  <li>From local images</li>
+  <li>From uploaded images</li>
+  <li>From image URLs</li>
+</ul>
+
+<pre><code>
+out = model.generate(
+  **inputs,
+  max_new_tokens=50,
+  num_beams=4
+)
+</code></pre>
+
+<p>
+The usage of beam search improves caption quality by exploring multiple possible outputs.
+</p>
+
+---
+
+<h3>Example output</h3>
+
+<div class="callout">
+True: Two boys playing near a lake throwing rocks<br>
+Predicted: Two children are playing near a body of water
+</div>
+
+<p>
+The model captures the scene correctly but simplifies important details.
+</p>
+
+---
+
+<h3>What this shows</h3>
+
+<p>
+This pipeline demonstrates that performance depends on more than the model:
+dataset structure, preprocessing, and training strategy all shape the output.
+</p>
 
 </section>
 
@@ -487,6 +631,24 @@ output = model.generate(**inputs)
 <!-- PROCESSING -->
 <section id="image-processing">
   <p class="section-label">04 - Processing</p>
+
+  <h2>How Preprocessing Affects Output</h2>
+
+  <p>
+    Before reaching our model, the images are transformed into a fixed format.
+    These preprocessing choices directly impact caption quality.
+  </p>
+
+  <div class="callout">
+    Small visual changes can lead to large language differences.
+  </div>
+
+  <h3>Key finding</h3>
+
+  <p>
+    The model is highly sensitive to detail and context.
+    When information is lost, captions become vague.
+  </p>
 
   <h2>Image Processing Experiments</h2>
 
@@ -543,49 +705,108 @@ output = model.generate(**inputs)
 <section id="evaluation">
   <p class="section-label">05 - Evaluation</p>
 
-  <h2>What works—and what doesn’t</h2>
+  <h2>What Works and What Breaks</h2>
 
-  <h3>Strengths</h3>
+  <h3>Where the Model Succeeds</h3>
   <ul>
-    <li>Captures general scenes well</li>
-    <li>Handles common objects reliably</li>
+    <li>The model can recognize common objects and scenes</li>
+    <li>It can produces fluent, grammatical descriptions</li>
+    <li>Captures overall structure of an image</li>
   </ul>
 
-  <h3>Weaknesses</h3>
+  <h3>Where it Fails</h3>
   <ul>
-    <li>Misses important details</li>
-    <li>Struggles with context</li>
-    <li>Fails on text-heavy images</li>
+    <li>It misses specific actions (for example, “throwing rocks”)</li>
+    <li>Potentially removes important contextual details</li>
+    <li>The model struggles with text inside images</li>
+    <li>Ignores accessibility intent</li>
   </ul>
 
   <div class="callout">
-    Correct captions are not always useful captions.
+    A caption can be correct but still not useful for accessibility.
   </div>
 
   <p>
-    Accessibility requires intention and context—something current models lack.
+    This reveals a key limitation: the model is optimized for describing images,
+    not for communicating meaning to a user with specific needs.
   </p>
+
 </section>
 
 
 <!-- TRY IT -->
 <section id="try-it">
-  <p class="section-label">06 - Try It</p>
-
-  <h2>Try the model yourself</h2>
+  <h2>Understand and Explore the System</h2>
 
   <p>
-    Upload your own image and see how the model performs.
+    Instead of just interacting with the final model, this section lets you
+    understand how the system works and experiment with it directly.
+  </p>
+
+  <!-- VIDEO -->
+  <h3>Project Walkthrough</h3>
+
+  <p>
+    In this short video, I walk through the deliverables of this project: motivation, model, implementation,
+    and key findings of the project.
   </p>
 
   <div class="try-it-box">
-    <div class="try-it-header">Live Demo</div>
+    <div class="try-it-header">Project Explanation Video</div>
     <div class="try-it-body">
-      <iframe src="YOUR_LINK"></iframe>
+      <!-- Add in YouTube Link-->
+      <iframe 
+        src="YOUR_VIDEO_LINK"
+        title="Project Overview"
+        allowfullscreen>
+      </iframe>
     </div>
     <div class="try-it-note">
-      Results may be inaccurate or overly general.
+      Covers model design, training process, and key limitations.
     </div>
+  </div>
+
+  <!-- GUIDED NOTEBOOK -->
+  <h3>Run the Full Project</h3>
+
+  <p>
+    This notebook contains the full implementation: dataset loading,
+    preprocessing, training, experiments, and evaluation.
+  </p>
+
+  <div class="callout">
+    <a href="https://colab.research.google.com/drive/1FSQ3ed94q21K3fj8gHOc20JSvqzncOFj" target="_blank">
+      Open Guided Colab Notebook →
+    </a>
+  </div>
+
+  <p>
+    Use this if you want to reproduce results or understand the full pipeline.
+  </p>
+
+  <!-- SANDBOX NOTEBOOK -->
+  <h3>Experiment Yourself</h3>
+
+  <p>
+    Want to try your own images or modify the model behavior? Use the sandbox
+    notebook below.
+  </p>
+
+  <div class="callout">
+    <a href="https://colab.research.google.com/drive/1qdmu4thXJwnSXGHRNj4qE4ZPVsCuMw6g#scrollTo=t37dMC-PR5By" target="_blank">
+      Open Sandbox Notebook →
+    </a>
+  </div>
+
+  <p>
+    This version removes most of the training code and focuses on inference,
+    making it easier to test how the model responds to different images.
+  </p>
+
+  <!-- REFLECTION NOTE -->
+  <div class="callout">
+    The goal is not just to use the model, but to understand its limitations—
+    especially where generated captions fail to meet accessibility needs.
   </div>
 </section>
 
