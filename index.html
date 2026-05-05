@@ -215,6 +215,13 @@
       color: var(--ink-faint);
       margin-bottom: 0.4rem;
     }
+    .experiment-cell img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
     .img-placeholder {
       width: 100%;
       aspect-ratio: 4/3;
@@ -657,46 +664,49 @@ dataset structure, preprocessing, and training strategy all shape the output.
   </p>
 
   <div class="experiment">
-    <div class="experiment-header">Resolution</div>
-    <div class="experiment-body">
-      <div class="experiment-row">
-        <div class="experiment-cell">
-          <div class="label">Original</div>
-          <div class="img-placeholder">Image</div>
-          <div class="caption-out">"A man riding a bike"</div>
-          <span class="rating good">Good</span>
-        </div>
-        <div class="experiment-cell">
-          <div class="label">Low Resolution</div>
-          <div class="img-placeholder">Image</div>
-          <div class="caption-out">"A person riding something"</div>
-          <span class="rating partial">Partial</span>
-        </div>
+  <div class="experiment-header">Resolution</div>
+  <div class="experiment-body">
+    <div class="experiment-row">
+      <div class="experiment-cell">
+        <div class="label">Original</div>
+        <img src="images/beach-original.png" alt="Original Version of the Image">
+        <div class="caption-out">"A beach with a lot of people on it"</div>
+        <span class="rating good">Alright</span>
       </div>
-      <p>Lower detail reduces caption specificity.</p>
-    </div>
-  </div>
 
-  <div class="experiment">
-    <div class="experiment-header">Cropping</div>
-    <div class="experiment-body">
-      <div class="experiment-row">
-        <div class="experiment-cell">
-          <div class="label">Full</div>
-          <div class="img-placeholder">Image</div>
-          <div class="caption-out">"People at a beach"</div>
-          <span class="rating good">Good</span>
-        </div>
-        <div class="experiment-cell">
-          <div class="label">Cropped</div>
-          <div class="img-placeholder">Image</div>
-          <div class="caption-out">"A person standing"</div>
-          <span class="rating poor">Poor</span>
-        </div>
+      <div class="experiment-cell">
+        <div class="label">Low Resolution</div>
+        <img src="images/beach-low.png" alt="Low-resolution blurred version of the Same Image">
+        <div class="caption-out">"A group of people are sitting on the beach under umbrellas."</div>
+        <span class="rating partial">Partially Right</span>
       </div>
-      <p>Removing context leads to vague outputs.</p>
     </div>
+    <p>Lower detail reduces caption specificity.</p>
   </div>
+</div>
+
+
+<div class="experiment">
+  <div class="experiment-header">Cropping</div>
+  <div class="experiment-body">
+    <div class="experiment-row">
+      <div class="experiment-cell">
+        <div class="label">Contrast</div>
+        <img src="images/beach-contrast.png" alt="Contrasted Version of the Original Image">
+        <div class="caption-out">"A beach with a lot of people on it"</div>
+        <span class="rating good">Mediocre</span>
+      </div>
+
+      <div class="experiment-cell">
+        <div class="label">Cropped</div>
+        <img src="images/beach-cropped.png" alt="Cropped image focusing on a single person">
+        <div class="caption-out">"A group of people are walking on the beach"</div>
+        <span class="rating poor">Alright</span>
+      </div>
+    </div>
+    <p>Removing context leads to vague outputs.</p>
+  </div>
+</div>
 
 </section>
 
